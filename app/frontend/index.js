@@ -1,27 +1,6 @@
 "use strict";
 
-// ---------------------------------------------------------------------------
-// model
-// store plain numbers here, add units only when displaying
-// later this object gets filled from the backend instead of the simulation
-// ---------------------------------------------------------------------------
-
-const deviceState = 
-{
-  temperatureC: 23.4,
-  lowAlarmC: 15.0,
-  highAlarmC: 30.0
-};
-
-// simulated reading range, one decimal stepp (see simulate_reading)
-const MIN_TEMP_C = 10.0;
-const MAX_TEMP_C = 40.0;
-const TEMP_STEP_C = 0.1;
-
-// ---------------------------------------------------------------------------
 // elements
-// grabbed once, defer in the html makes sure they exist before this runs
-// ---------------------------------------------------------------------------
 
 const temperature_el = document.querySelector("#temperature");
 const alarm_status_el = document.querySelector("#alarm-status");
@@ -33,107 +12,152 @@ const message_el = document.querySelector("#message");
 const refresh_button = document.querySelector("#refresh");
 const alarm_form = document.querySelector("#alarm-form");
 
-// ---------------------------------------------------------------------------
-// view
-// read from the model, write to the page, never read state back out of the dom
-// ---------------------------------------------------------------------------
+// ddisplay
 
-function alarm_status() 
+function alarm_status(state)
 {
-  if (deviceState.temperatureC <= deviceState.lowAlarmC) 
-  {
-    return "LOW TEMPERATURE ALARM";
-  } 
-  
-  else if (deviceState.temperatureC >= deviceState.highAlarmC) 
-  {
-    return "HIGH TEMPERATURE ALARM";
-  } 
-  
-  else 
-  {
+    if (state.temperatureC <= state.lowAlarmC)
+    {
+        return "LOW TEMPERATURE ALARM";
+    }
+
+    if (state.temperatureC >= state.highAlarmC)
+    {
+        return "HIGH TEMPERATURE ALARM";
+    }
+
     return "NORMAL";
-  }
 }
 
-function render_dashboard() 
+function render_dashboard(state)
 {
+    temperature_el.textContent = state.temperatureC.toFixed(1);
+    low_value_el.textContent = state.lowAlarmC.toFixed(1);
+    high_value_el.textContent = state.highAlarmC.toFixed(1);
 
-  temperature_el.textContent = deviceState.temperatureC.toFixed(1);
-  low_value_el.textContent = deviceState.lowAlarmC.toFixed(1);
-  high_value_el.textContent = deviceState.highAlarmC.toFixed(1);
+    const status = alarm_status(state);
 
-  const status = alarm_status();
-  alarm_status_el.textContent = status;
-  alarm_status_el.dataset.status = status;
+    alarm_status_el.textContent = status;
+    alarm_status_el.dataset.status = status;
 }
 
-function show_message(text, kind) 
+function show_message(text, kind)
 {
-  message_el.textContent = text;
-  message_el.dataset.kind = kind;
+    message_el.textContent = text;
+    message_el.dataset.kind = kind;
 }
 
-// ---------------------------------------------------------------------------
-// actions
-// each handler mutates the model, then calls render_dashboard
-// ---------------------------------------------------------------------------
+// API(s)
+// Shared request handling for all three endpoints.
 
-function simulate_reading() 
+async function request_state(path, options)
 {
-  const range = MAX_TEMP_C - MIN_TEMP_C;
-  const steps = Math.floor(Math.random() * (range / TEMP_STEP_C + 1));
-  deviceState.temperatureC = MIN_TEMP_C + steps * TEMP_STEP_C;
+    const response = await fetch(path, options);
+    const result = await response.json();
 
-  render_dashboard();
+    if (!response.ok)
+    {
+        throw new Error(result.error || `Request failed: HTTP ${response.status}`);
+    }
+
+    return result;
 }
 
-function apply_alarm_limits(event) 
+// Actions
+
+async function load_state()
 {
+    try
+    {
+        const state = await request_state("/api/state");
 
-  event.preventDefault();
+        low_input_el.value = state.lowAlarmC.toFixed(1);
+        high_input_el.value = state.highAlarmC.toFixed(1);
 
-  const low = Number(low_input_el.value);
-  const high = Number(high_input_el.value);
-  const both_filled = low_input_el.value !== "" && high_input_el.value !== "";
-
-  if (both_filled === false) 
-  {
-    show_message("rejected: enter both low and high limits", "error");
-    return;
-  }
-
-  const both_numbers = Number.isNaN(low) === false && Number.isNaN(high) === false;
-
-  if (both_numbers === false) 
-  {
-    show_message("rejected: both limits must be numbers", "error");
-    return;
-  }
-
-  if (low >= high) 
-  {
-    show_message("rejected: low limit must be below high limit", "error");
-    return;
-  }
-
-  deviceState.lowAlarmC = low;
-  deviceState.highAlarmC = high;
-
-  render_dashboard();
-  show_message("accepted locally", "success");
-
+        render_dashboard(state);
+    }
+    catch (error)
+    {
+        show_message(error.message, "error");
+    }
 }
 
-// ---------------------------------------------------------------------------
-// startup
-// seed inputs from the model, wire events, draw the first frame
-// ---------------------------------------------------------------------------
+async function simulate_reading()
+{
+    try
+    {
+        const state = await request_state("/api/simulate",
+        {
+            method: "POST"
+        });
 
-low_input_el.value = deviceState.lowAlarmC.toFixed(1);
-high_input_el.value = deviceState.highAlarmC.toFixed(1);
+        render_dashboard(state);
+        show_message("Reading updated", "success");
+    }
+    catch (error)
+    {
+        show_message(error.message, "error");
+    }
+}
 
-refresh_button.addEventListener("click", simulate_reading);
-alarm_form.addEventListener("submit", apply_alarm_limits);
+async function apply_alarm_limits(event)
+{
+    event.preventDefault();
 
-render_dashboard();
+    if (low_input_el.value === "" || high_input_el.value === "")
+    {
+        show_message("Enter both low and high limits", "error");
+        return;
+    }
+
+    const low = Number(low_input_el.value);
+    const high = Number(high_input_el.value);
+
+    if (!Number.isFinite(low) || !Number.isFinite(high))
+    {
+        show_message("Both limits must be finite numbers", "error");
+        return;
+    }
+
+    if (low >= high)
+    {
+        show_message("Low limit must be below high limit", "error");
+        return;
+    }
+
+    try
+    {
+        const state = await request_state("/api/alarms",
+        {
+            method: "PUT",
+            headers:
+            {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(
+            {
+                lowAlarmC: low,
+                highAlarmC: high
+            })
+        });
+
+        render_dashboard(state);
+        show_message("Alarm limits updated", "success");
+    }
+    catch (error)
+    {
+        show_message(error.message, "error");
+    }
+}
+
+// Startup
+
+function initialise()
+{
+    refresh_button.addEventListener("click", simulate_reading);
+    alarm_form.addEventListener("submit", apply_alarm_limits);
+
+    load_state();
+}
+
+initialise();

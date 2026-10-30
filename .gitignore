@@ -1,1 +1,8 @@
 app_secrets.txt
+
+node_modules/
+.env
+.env.*
+!.env.example
+*_secrets.txt
+npm-debug.log*
