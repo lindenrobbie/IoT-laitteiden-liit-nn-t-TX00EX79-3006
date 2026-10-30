@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Temperature dashboard ting</title>
+  <link rel="stylesheet" href="./index.css">
+  <script src="./index.js" defer></script>
+</head>
+
+<body>
+
+  <main>
+    <h1>Temperature dashboard</h1>
+    <p class="demo">test</p>
+
+    <!-- current reading -->
+    <section>
+      <h2>Current temperature</h2>
+      <p class="temperature"><span id="temperature">--</span> &deg;C</p>
+    </section>
+
+    <!-- alarm status (text label, not color alone) -->
+    <section>
+      <h2>Alarm status</h2>
+      <p id="alarm-status" class="status">--</p>
+    </section>
+
+    <!-- current alarm limits -->
+    <section>
+      <h2>Alarm limits</h2>
+      <p>Low: <span id="low-value">--</span> &deg;C</p>
+      <p>High: <span id="high-value">--</span> &deg;C</p>
+    </section>
+
+    <!-- edit alarm limits -->
+    <section>
+      <h2>Set alarm limits</h2>
+      <form id="alarm-form">
+        <label for="low-input">Low temperature (&deg;C)</label>
+        <input id="low-input" type="number" step="0.1">
+
+        <label for="high-input">High temperature (&deg;C)</label>
+        <input id="high-input" type="number" step="0.1">
+
+        <button type="submit">Apply</button>
+      </form>
+      <p id="message" class="message">--</p>
+    </section>
+
+    <!-- simulate a new reading -->
+    <section>
+      <button id="refresh" type="button">Simulate new reading</button>
+    </section>
+  </main>
+  
+</body>
+
+</html>

@@ -1,0 +1,107 @@
+body 
+{
+  font-family: system-ui, sans-serif;
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  line-height: 1.5;
+  color: #222;
+}
+
+h1 
+{
+  margin-bottom: 0;
+}
+
+.demo 
+{
+  color: #666;
+  font-size: 0.9rem;
+  margin-top: 0.25rem;
+}
+
+section 
+{
+  border-top: 1px solid #ddd;
+  padding: 1rem 0;
+}
+
+h2 
+{
+  font-size: 1rem;
+  margin: 0 0 0.5rem;
+}
+
+.temperature 
+{
+  font-size: 2rem;
+  margin: 0;
+}
+
+/* alarm status: shape and weight change too, so it does not rely on color alone */
+.status 
+{
+  display: inline-block;
+  padding: 0.4rem 0.8rem;
+  border: 2px solid #888;
+  border-radius: 6px;
+  font-weight: bold;
+}
+
+.status[data-status="NORMAL"] 
+{
+  border-color: #2e7d32;
+  color: #2e7d32;
+}
+
+.status[data-status="LOW TEMPERATURE ALARM"] 
+{
+  border-color: #1565c0;
+  color: #1565c0;
+  border-style: dashed;
+}
+
+.status[data-status="HIGH TEMPERATURE ALARM"] 
+{
+  border-color: #c62828;
+  color: #c62828;
+  border-style: dashed;
+}
+
+label 
+{
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+input 
+{
+  display: block;
+  margin-bottom: 0.75rem;
+  padding: 0.4rem;
+  font-size: 1rem;
+  width: 8rem;
+}
+
+button 
+{
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.message 
+{
+  font-size: 0.9rem;
+  min-height: 1.2rem;
+}
+
+.message[data-kind="error"] 
+{
+  color: #c62828;
+}
+
+.message[data-kind="success"] 
+{
+  color: #2e7d32;
+}
