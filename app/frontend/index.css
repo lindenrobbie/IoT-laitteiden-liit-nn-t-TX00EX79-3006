@@ -105,3 +105,29 @@ button
 {
   color: #2e7d32;
 }
+
+.mqtt-status
+  {
+    display: inline-block;
+    padding: 0.4rem 0.8rem;
+    border: 2px solid #888;
+    border-radius: 6px;
+    font-weight: bold;
+  }
+
+  .mqtt-status[data-connected="true"]
+  {
+    border-color: #2e7d32;
+    color: #2e7d32;
+  }
+
+  .mqtt-status[data-connected="false"]
+  {
+    border-color: #c62828;
+    color: #c62828;
+  }
+
+  .message[data-kind="pending"]
+  {
+    color: #f57f17;
+  }
